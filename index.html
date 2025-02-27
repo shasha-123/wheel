@@ -52,16 +52,19 @@
     </div>
     
     <script>
-        const lifeCategories = ["Finances", "Well-being", "Family", "Friends", "Personal Growth", "Fun", "Meaning", "Career"];
-        const teamCategories = ["Alignment", "Give Feedback", "Clarity", "Connection", "Recognition", "I am an effective manager", "Ask for feedback", "Coach"];
-        let currentCategories = lifeCategories;
+        const categories = {
+            life: ["Finances", "Well-being", "Family", "Friends", "Personal Growth", "Fun", "Meaning", "Career"],
+            team: ["Alignment", "Give Feedback", "Clarity", "Connection", "Recognition", "I am an effective manager", "Ask for feedback", "Coach"]
+        };
+        let currentCategories = categories.life;
         
         const canvas = document.getElementById("wheelCanvas");
         const ctx = canvas.getContext("2d");
         const radius = canvas.width / 2;
-        
+
         function drawWheel() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.resetTransform();
             ctx.translate(radius, radius);
             for (let i = 0; i < 8; i++) {
                 let startAngle = (i * Math.PI * 2) / 8;
@@ -74,11 +77,11 @@
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = "black";
-                ctx.fillText(currentCategories[i], Math.cos(startAngle + Math.PI / 8) * radius * 0.6, Math.sin(startAngle + Math.PI / 8) * radius * 0.6);
+                ctx.fillText(currentCategories[i], Math.cos(startAngle + Math.PI / 8) * radius * 0.7, Math.sin(startAngle + Math.PI / 8) * radius * 0.7);
             }
-            ctx.translate(-radius, -radius);
+            ctx.resetTransform();
         }
-        
+
         function updateWheel(segment, score) {
             let startAngle = (segment * Math.PI * 2) / 8;
             let endAngle = ((segment + 1) * Math.PI * 2) / 8;
@@ -87,14 +90,14 @@
             ctx.moveTo(radius, radius);
             ctx.arc(radius, radius, scaledRadius, startAngle, endAngle);
             ctx.closePath();
-            ctx.fillStyle = "#4CAF50";
+            ctx.fillStyle = "rgba(76, 175, 80, 0.6)";
             ctx.fill();
             ctx.stroke();
         }
         
         function changeWheel() {
             let wheelType = document.getElementById("wheelType").value;
-            currentCategories = wheelType === "life" ? lifeCategories : teamCategories;
+            currentCategories = categories[wheelType];
             drawWheel();
             loadForm();
         }
@@ -104,3 +107,31 @@
             formContainer.innerHTML = "";
             currentCategories.forEach((category, index) => {
                 let div = document.createElement("div");
+                div.innerHTML = `
+                    <h4>${category}</h4>
+                    <label>Score (0-10): <input type="number" min="0" max="10" id="score_${index}" onchange="updateWheel(${index}, this.value)"/></label><br>
+                `;
+                formContainer.appendChild(div);
+            });
+        }
+
+        function exportResults() {
+            let formData = {};
+            document.querySelectorAll("input").forEach(input => {
+                formData[input.id] = input.value;
+            });
+            console.log("Exporting Data:", formData);
+            alert("Results exported successfully!");
+        }
+
+        function clearWheel() {
+            drawWheel();
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            drawWheel();
+            loadForm();
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheel of Life Assessment</title>
+    <title>Wheel Assessment</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,6 +15,7 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            margin-bottom: 20px;
         }
         canvas {
             border: 1px solid #000;
@@ -22,7 +23,7 @@
         .form-section {
             margin-top: 20px;
         }
-        input, textarea, button {
+        input, textarea, button, select {
             margin: 5px;
             padding: 8px;
             width: 80%;
@@ -30,49 +31,76 @@
     </style>
 </head>
 <body>
-    <h2>Wheel of Life Assessment</h2>
+    <h2>Wheel Assessment</h2>
+    
+    <label for="wheelType">Select Wheel Type:</label>
+    <select id="wheelType" onchange="changeWheel()">
+        <option value="life">Life Wheel</option>
+        <option value="team">Team Wheel</option>
+    </select>
+    
     <div class="wheel-container">
         <canvas id="wheelCanvas" width="300" height="300"></canvas>
         <button onclick="clearWheel()">Clear Wheel</button>
     </div>
+    
     <div class="form-section">
         <h3>Rate Your Areas</h3>
-        <p>Enter a score (1-10) for each category and describe what a 10 would look like.</p>
+        <p>Enter a score (0-10) for each category and color in the corresponding segment.</p>
         <div id="areas"></div>
-        <button onclick="submitForm()">Submit</button>
+        <button onclick="exportResults()">Export to Google Doc</button>
     </div>
     
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const categories = ["Career", "Finances", "Health", "Relationships", "Personal Growth", "Fun & Recreation", "Physical Environment", "Emotional Well-being"];
-            const formContainer = document.getElementById("areas");
-            
-            categories.forEach(category => {
-                let div = document.createElement("div");
-                div.innerHTML = `
-                    <h4>${category}</h4>
-                    <label>Score (1-10): <input type="number" min="1" max="10" id="score_${category}"/></label><br>
-                    <label>What does a 10 look like? <textarea id="vision_${category}"></textarea></label><br>
-                    <label>Action Steps: <textarea id="actions_${category}"></textarea></label><br>
-                `;
-                formContainer.appendChild(div);
-            });
-        });
+        const lifeCategories = ["Finances", "Well-being", "Family", "Friends", "Personal Growth", "Fun", "Meaning", "Career"];
+        const teamCategories = ["Alignment", "Give Feedback", "Clarity", "Connection", "Recognition", "I am an effective manager", "Ask for feedback", "Coach"];
+        let currentCategories = lifeCategories;
         
-        function submitForm() {
-            let formData = {};
-            document.querySelectorAll("input, textarea").forEach(input => {
-                formData[input.id] = input.value;
-            });
-            console.log("Submitted Data:", formData);
-            alert("Form Submitted Successfully!");
-        }
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+        const radius = canvas.width / 2;
         
-        function clearWheel() {
-            const canvas = document.getElementById("wheelCanvas");
-            const ctx = canvas.getContext("2d");
+        function drawWheel() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.translate(radius, radius);
+            for (let i = 0; i < 8; i++) {
+                let startAngle = (i * Math.PI * 2) / 8;
+                let endAngle = ((i + 1) * Math.PI * 2) / 8;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = "#ddd";
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = "black";
+                ctx.fillText(currentCategories[i], Math.cos(startAngle + Math.PI / 8) * radius * 0.6, Math.sin(startAngle + Math.PI / 8) * radius * 0.6);
+            }
+            ctx.translate(-radius, -radius);
         }
-    </script>
-</body>
-</html>
+        
+        function updateWheel(segment, score) {
+            let startAngle = (segment * Math.PI * 2) / 8;
+            let endAngle = ((segment + 1) * Math.PI * 2) / 8;
+            let scaledRadius = (score / 10) * radius;
+            ctx.beginPath();
+            ctx.moveTo(radius, radius);
+            ctx.arc(radius, radius, scaledRadius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = "#4CAF50";
+            ctx.fill();
+            ctx.stroke();
+        }
+        
+        function changeWheel() {
+            let wheelType = document.getElementById("wheelType").value;
+            currentCategories = wheelType === "life" ? lifeCategories : teamCategories;
+            drawWheel();
+            loadForm();
+        }
+        
+        function loadForm() {
+            const formContainer = document.getElementById("areas");
+            formContainer.innerHTML = "";
+            currentCategories.forEach((category, index) => {
+                let div = document.createElement("div");
